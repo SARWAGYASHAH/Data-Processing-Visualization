@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            line-height: 1.5;
+        }
+
+        .container {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(1, 4, 9, 0.8);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #c9d1d9;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #8b949e;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #c9d1d9;
+            margin-bottom: 8px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            border: 2px dashed #30363d;
+            border-radius: 6px;
+            padding: 40px 24px;
+            text-align: center;
+            background-color: #0d1117;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #58a6ff;
+            background-color: rgba(88, 166, 255, 0.05);
+        }
+
+        .file-input-wrapper.dragover {
+            border-color: #58a6ff;
+            background-color: rgba(88, 166, 255, 0.1);
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-content {
+            pointer-events: none;
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background-color: #21262d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #8b949e;
+        }
+
+        .file-input-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #c9d1d9;
+            margin-bottom: 4px;
+        }
+
+        .file-input-subtext {
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .file-selected .file-icon {
+            background-color: rgba(88, 166, 255, 0.1);
+            color: #58a6ff;
+        }
+
+        .file-selected .file-input-wrapper {
+            border-color: #58a6ff;
+            background-color: rgba(88, 166, 255, 0.05);
+        }
+
+        .selected-file {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .selected-file.visible {
+            display: flex;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #c9d1d9;
+            margin-bottom: 2px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .remove-file:hover {
+            color: #f85149;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background-color: #238636;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background-color: #2ea043;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            background-color: #21262d;
+            color: #484f58;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .submit-btn:disabled:hover {
+            background-color: #21262d;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loading state */
+        .submit-btn.loading {
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .submit-btn.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            margin: -8px 0 0 -8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+            
+            .container {
+                padding: 24px;
+            }
+            
+            .header h2 {
+                font-size: 20px;
+            }
+            
+            .file-input-wrapper {
+                padding: 32px 16px;
+            }
+        }
+
+        /* Focus styles for accessibility */
+        .file-input:focus + .file-input-wrapper {
+            outline: 2px solid #58a6ff;
+            outline-offset: 2px;
+        }
+
+        .submit-btn:focus-visible {
+            outline: 2px solid #58a6ff;
+            outline-offset: 2px;
+        }
+
+        /* Error state */
+        .error {
+            color: #f85149;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+
+        .file-input-wrapper.error {
+            border-color: #f85149;
+            background-color: rgba(248, 81, 73, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Upload CSV File</h2>
+            <p>Select a CSV file to upload to the server</p>
+        </div>
+        
+        <form action="/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="form-group">
+                <label class="form-label" for="csvFile">Choose file</label>
+                
+                <div class="file-input-wrapper" id="fileWrapper">
+                    <input 
+                        type="file" 
+                        name="file" 
+                        accept=".csv" 
+                        class="file-input" 
+                        id="csvFile"
+                        required
+                    >
+                    <div class="file-input-content">
+                        <div class="file-icon" id="fileIcon">📄</div>
+                        <div class="file-input-text" id="fileText">
+                            Choose CSV file or drag and drop
+                        </div>
+                        <div class="file-input-subtext">
+                            Maximum file size: 10MB
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="selected-file" id="selectedFile">
+                    <div class="file-info">
+                        <div class="file-name" id="selectedFileName"></div>
+                        <div class="file-size" id="selectedFileSize"></div>
+                    </div>
+                    <button type="button" class="remove-file" id="removeFile" title="Remove file">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="error" id="errorMessage"></div>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                Upload File
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('csvFile');
+        const fileWrapper = document.getElementById('fileWrapper');
+        const fileIcon = document.getElementById('fileIcon');
+        const fileText = document.getElementById('fileText');
+        const selectedFile = document.getElementById('selectedFile');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const selectedFileSize = document.getElementById('selectedFileSize');
+        const removeFile = document.getElementById('removeFile');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const form = document.getElementById('uploadForm');
+
+        // File size formatter
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+            fileWrapper.classList.add('error');
+        }
+
+        // Hide error message
+        function hideError() {
+            errorMessage.classList.remove('visible');
+            fileWrapper.classList.remove('error');
+        }
+
+        // Validate file
+        function validateFile(file) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showError('Please select a CSV file.');
+                return false;
+            }
+            
+            if (file.size > maxSize) {
+                showError('File size must be less than 10MB.');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Handle file selection
+        function handleFileSelect(file) {
+            if (!validateFile(file)) {
+                clearFile();
+                return;
+            }
+
+            hideError();
+            
+            // Update UI
+            fileIcon.textContent = '✓';
+            fileText.textContent = 'File selected';
+            fileWrapper.classList.add('file-selected');
+            
+            // Show selected file info
+            selectedFileName.textContent = file.name;
+            selectedFileSize.textContent = formatFileSize(file.size);
+            selectedFile.classList.add('visible');
+            
+            // Enable submit button
+            submitBtn.disabled = false;
+        }
+
+        // Clear file selection
+        function clearFile() {
+            fileInput.value = '';
+            fileIcon.textContent = '📄';
+            fileText.textContent = 'Choose CSV file or drag and drop';
+            fileWrapper.classList.remove('file-selected');
+            selectedFile.classList.remove('visible');
+            submitBtn.disabled = true;
+            hideError();
+        }
+
+        // File input change event
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            } else {
+                clearFile();
+            }
+        });
+
+        // Remove file button
+        removeFile.addEventListener('click', clearFile);
+
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileWrapper.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileWrapper.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileWrapper.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            fileWrapper.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            fileWrapper.classList.remove('dragover');
+        }
+
+        fileWrapper.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        }
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                showError('Please select a file.');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+
+            // Create FormData and submit
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Success - you can redirect or show success message
+                    alert('File uploaded successfully!');
+                    clearFile();
+                } else {
+                    throw new Error('Upload failed');
+                }
+            })
+            .catch(error => {
+                showError('Upload failed. Please try again.');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = fileInput.files.length === 0;
+            });
+        });
+    </script>
+</body>
+</html>
